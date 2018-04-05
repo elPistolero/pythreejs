@@ -336,6 +336,14 @@ var RenderableView = widgets.DOMWidgetView.extend({
 
     },
 
+    screenshot: function() {
+        var data_url = this.renderer.domElement.toDataURL('image/png');
+        this.send({
+            type: 'screenshot',
+            ret_val: data_url,
+        });
+    },
+
     teardownViewer: function() {
 
         this.$renderer.off('mouseenter');
@@ -379,6 +387,9 @@ var RenderableView = widgets.DOMWidgetView.extend({
         switch(content.type) {
         case 'freeze':
             this.freeze();
+            break;
+        case 'screenshot':
+            this.screenshot();
             break;
         default:
         }

@@ -9,6 +9,13 @@ from ..enums import ToneMappings
 from ..math.Plane_autogen import Plane
 from ..renderers.webgl.WebGLShadowMap_autogen import WebGLShadowMap
 
+import base64
+try:
+    from io import BytesIO as StringIO
+except:
+    from cStringIO import StringIO
+import PIL.Image
+
 
 class RenderableWidget(DOMWidget):
     _view_module = Unicode(npm_pkg_name).tag(sync=True)
@@ -42,6 +49,23 @@ class RenderableWidget(DOMWidget):
     clearColor = Unicode('#000000').tag(sync=True)
     clearOpacity = CFloat(1.0).tag(sync=True)
 
+    def __init__(self, **kwargs):
+        super(RenderableWidget, self).__init__(**kwargs)
+        self.on_msg(self._on_potential_ret_val)
+        self.screenshot_data = None
+        self.screenshot_ready = False
+
+    def _on_potential_ret_val(self, widget, content, buffers):
+        """Message callback used internally"""
+        if content['type'] == "screenshot":
+            self._handle_screenshot(content['ret_val'])
+
+    def _handle_screenshot(self, data):
+        data = data[data.find(',')+1:]
+        data = base64.b64decode(data)
+        self.screenshot_data = PIL.Image.open(StringIO(data))
+        self.screenshot_ready = True
+
     def send_msg(self, message_type, payload=None):
         if payload is None:
             payload = {}
@@ -61,6 +85,13 @@ class RenderableWidget(DOMWidget):
     def freeze(self):
         content = {
             "type": "freeze"
+        }
+        self.send(content)
+
+    def screenshot(self):
+        self.screenshot_ready = False
+        content = {
+            "type": "screenshot"
         }
         self.send(content)
 
